@@ -14,8 +14,6 @@ Depending on your installation method you will find the directory:
  - Custom: {your path}/grafana/public/app/plugins/
 
 
-
-
 ## Documentation
 
 [KairosDB Plugin Documentation](http://docs.grafana.org/datasources/kairosdb/)
