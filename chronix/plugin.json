@@ -1,0 +1,40 @@
+{
+  "id": "chronix",
+  "name": "ChronixDB",
+  "type": "datasource",
+  "metrics": true,
+  "annotations": false,
+  "staticRoot": ".",
+  "info": {
+    "description": "datasource plugin for ChronixDB",
+    "author": {
+      "name": "QAware",
+      "url": "http://www.chronix.io"
+    },
+    "keywords": [
+      "chronix",
+      "apache solr",
+      "time series"
+    ],
+    "logos": {
+      "small": "img/chronix_logo.png",
+      "large": "img/chronix_logo.png"
+    },
+    "links": [
+      {
+        "name": "GitHub",
+        "url": "https://github.com/chronixdb/grafana-datasource"
+      },
+      {
+        "name": "License",
+        "url": "https://github.com/grafana/kairosdb-datasource/blob/master/LICENSE"
+      }
+    ],
+    "version": "1.0.1",
+    "updated": "2016-02-10"
+  },
+  "dependencies": {
+    "grafanaVersion": "3.x.x",
+    "plugins": []
+  }
+}
