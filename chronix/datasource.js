@@ -33,43 +33,42 @@ define([
             return this.rawQuery(targets, start, end).then(this.extractTimeSeries);
         };
 
-        ChronixDBDatasource.prototype.rawQuery = function (targets, start, end) {
+        function toTagQueryString(tag, tagName) {
+            return tagName + ':(' + tag.join(' OR ') + ')'
+        }
 
-            var metrics = "";
-            for (var qi = 0; qi < targets.length; qi++) {
-
-                metrics += "(";
-                var currentTarget = targets[qi];
-                if (qi == targets.length - 1) {
-                    metrics += currentTarget.metric;
-                } else {
-                    metrics += currentTarget.metric + " OR "
-                }
-
-                var tags = "";
-                var attributes = currentTarget.tags;
-                //add the tags
-                for (var property in attributes) {
-                    if (attributes.hasOwnProperty(property)) {
-                        var attribute = attributes[property];
-                        tags += property + ":" + attribute[0] + " AND "
-                    }
-                }
-                tags = tags.substr(0, tags.length - 5);
-                metrics += " AND " + tags + ")"
-
-
+        function toTargetQueryString(target) {
+            if (!target.tags || Object.keys(target.tags).length === 0) {
+                // simple metric-only
+                return target.metric;
             }
 
-            var q = "(" + metrics + ") AND start:" + start + " AND end:" + end;
+            // create strings for each tag
+            var targetQueryStrings = _(target.tags).map(toTagQueryString);
 
-            console.log("Query: " + q);
+            return '(' + target.metric + ' AND ' + targetQueryStrings.join(' AND ') + ')';
+        }
+
+        ChronixDBDatasource.prototype.rawQuery = function (targets, start, end) {
+            // create strings for each target
+            var targetsQueryStrings = _(targets).map(toTargetQueryString);
+
+            var query = '(' + targetsQueryStrings.join(' OR ') + ')'
+                + ' AND start:' + start
+                + ' AND end:' + end;
+
+            console.log("Query: " + query);
 
             //At this point we have to query chronix
+            var RAW_QUERY_BASE = '/select?fl=dataAsJson:[dataAsJson]&sort=start%20asc&wt=json';
+            var RAW_QUERY_FILTER_FUNCTION = '&fq=function=vector:0.1';
+            var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + '&q=';
+
             var options = {
                 method: 'GET',
-                url: this.url + '/select?fl=dataAsJson:[dataAsJson]&sort=start%20asc&wt=json&fq=function=vector:0.1&q=' + q
+                url: this.url + RAW_QUERY_BASE_WITH_FILTER + query
             };
+
             return this.backendSrv.datasourceRequest(options).then(function (response) {
                 return [targets, response];
             });
