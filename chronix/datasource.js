@@ -1,12 +1,9 @@
 define([
         'angular',
         'lodash',
-        'app/plugins/sdk',
-        'app/core/utils/datemath',
-        'app/core/utils/kbn',
         './query_ctrl'
     ],
-    function (angular, _, dateMath, kbn) {
+    function (angular, _) {
         'use strict';
 
         var self;
@@ -41,20 +38,37 @@ define([
             var metrics = "";
             for (var qi = 0; qi < targets.length; qi++) {
 
+                metrics += "(";
                 var currentTarget = targets[qi];
                 if (qi == targets.length - 1) {
                     metrics += currentTarget.metric;
                 } else {
                     metrics += currentTarget.metric + " OR "
                 }
+
+                var tags = "";
+                var attributes = currentTarget.tags;
+                //add the tags
+                for (var property in attributes) {
+                    if (attributes.hasOwnProperty(property)) {
+                        var attribute = attributes[property];
+                        tags += property + ":" + attribute[0] + " AND "
+                    }
+                }
+                tags = tags.substr(0, tags.length - 5);
+                metrics += " AND " + tags + ")"
+
+
             }
 
-            var q = metrics;//+ " AND start:" + start + " AND end:" + end;
+            var q = "(" + metrics + ") AND start:" + start + " AND end:" + end;
+
+            console.log("Query: " + q);
 
             //At this point we have to query chronix
             var options = {
                 method: 'GET',
-                url: this.url + '/select?fl=dataAsJson:[dataAsJson]&indent=on&rows=4000&sort=start%20asc&wt=json&q=' + q
+                url: this.url + '/select?fl=dataAsJson:[dataAsJson]&sort=start%20asc&wt=json&fq=function=vector:0.1&q=' + q
             };
             return this.backendSrv.datasourceRequest(options).then(function (response) {
                 return [targets, response];
@@ -63,6 +77,8 @@ define([
 
 
         ChronixDBDatasource.prototype.extractTimeSeries = function (targetsResponse) {
+            console.time("parse and convert solr result");
+
             var response = targetsResponse[1];
 
             if (response.data === undefined) {
@@ -75,12 +91,17 @@ define([
             for (var i = 0; i < dataset.length; i++) {
                 var currentDataSet = dataset[i];
                 var currentMetric = currentDataSet.metric;
+                console.log("Working with metric: " + currentMetric);
+
 
                 if (!(currentMetric in tsPoints)) {
                     tsPoints[currentMetric] = [];
                 }
 
+                console.time("json parse");
                 var jsonData = JSON.parse(currentDataSet.dataAsJson);
+                console.timeEnd("json parse");
+
                 var timestamps = jsonData[0];
                 var values = jsonData[1];
 
@@ -97,17 +118,22 @@ define([
             for (var key in tsPoints) {
                 ret.push({target: key, datapoints: tsPoints[key]});
             }
-
+            console.timeEnd("parse and convert solr result");
             return {data: ret};
         };
 
         /**
-         * Test if chronix is available
+         * Test true if chronix is available.
          * @returns {*}
          */
         ChronixDBDatasource.prototype.testDatasource = function () {
-            return this._request('GET', 'select?q=%7B!lucene%7D*%3A*&wt=json&indent=true').then(function () {
-                return {status: 'success', message: 'Data source is working', title: 'Success'};
+            return this.backendSrv.datasourceRequest({
+                url: this.url + '/select?q=%7B!lucene%7D*%3A*&rows=0',
+                method: 'GET'
+            }).then(response => {
+                if (response.status === 200) {
+                    return {status: "success", message: "Data source is working", title: "Success"};
+                }
             });
         };
 
@@ -212,49 +238,89 @@ define([
             });
         };
 
-        ChronixDBDatasource.prototype.metricFindQuery = function (query) {
-            if (!query) {
-                return this.q.when([]);
-            }
-
-            var interpolated;
-            try {
-                interpolated = this.templateSrv.replace(query);
-            }
-            catch (err) {
-                return this.q.reject(err);
-            }
-
-            var responseTransform = function (result) {
-                return _.map(result, function (value) {
-                    return {text: value};
-                });
+        /**
+         * Gets the available fields / attributes
+         * @param query the query to filter the fields
+         * @returns {*}
+         */
+        ChronixDBDatasource.prototype.suggestAttributes = function (query) {
+            console.log("Query is " + query);
+            var options = {
+                method: 'GET',
+                url: this.url + '/admin/luke?numTerms=0&wt=json'
             };
 
-            var metrics_regex = /metrics\((.*)\)/;
-            var tag_names_regex = /tag_names\((.*)\)/;
-            var tag_values_regex = /tag_values\((.*),\s?(.*?)\)/;
-
-            var metrics_query = interpolated.match(metrics_regex);
-            if (metrics_query) {
-                return this._performMetricSuggestQuery(metrics_query[1]).then(responseTransform);
-            }
-
-            var tag_names_query = interpolated.match(tag_names_regex);
-            if (tag_names_query) {
-                return this._performMetricKeyLookup(tag_names_query[1]).then(responseTransform);
-            }
-
-            var tag_values_query = interpolated.match(tag_values_regex);
-            if (tag_values_query) {
-                return this._performMetricKeyValueLookup(tag_values_query[1], tag_values_query[2]).then(responseTransform);
-            }
-
-            return this.q.when([]);
+            return this.backendSrv.datasourceRequest(options).then(this.mapToTextValue);
         };
 
 
+        var requiredFields = ["data", "start", "end", "_version_", "id", "metric"];
+        ChronixDBDatasource.prototype.mapToTextValue = function (result) {
+            console.log("Evaluating available fields.");
+
+            var fields = result.data.fields;
+
+            var stringFields = [];
+            //Iterate over the returned fields
+            for (var property in fields) {
+                if (fields.hasOwnProperty(property)) {
+                    if (requiredFields.indexOf(property.toLowerCase()) == -1) {
+                        console.log("Field: " + property);
+                        stringFields.push(property)
+                    }
+                }
+            }
+            return _.map(stringFields, (name) => {
+                return {text: name, value: "hans"};
+            });
+        };
+
+
+        /**
+         * Gets the available values for the attributes
+         * @param metric the metric to get the available attributes
+         * @param attribute the attribute
+         * @returns {*}
+         */
+        ChronixDBDatasource.prototype.suggestAttributesValues = function (metric, attribute) {
+
+            console.log("Metric is " + metric + " Attribute is " + attribute);
+
+            var options = {
+                method: 'GET',
+                url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=' + metric + '&rows=0&wt=json'
+            };
+
+            return this.backendSrv.datasourceRequest(options).then(this.mapValueToText);
+        };
+
+        ChronixDBDatasource.prototype.mapValueToText = function (result) {
+            console.log("Evaluating available attribute values.");
+
+            var fields = result.data.facet_counts.facet_fields;
+
+            var field;
+            //Iterate over the returned fields
+            for (var property in fields) {
+                if (fields.hasOwnProperty(property)) {
+                    console.log("Field: " + property);
+                    field = property;
+                }
+            }
+
+            var pairs = [];
+            var values = fields[field];
+
+            //Build pairs
+            for (var i = 0; i < values.length; i++) {
+                pairs.push([values[i], values[++i]]);
+            }
+
+            return _.map(pairs, (pair) => {
+                return {text: pair[0], value: pair[1]};
+            });
+        };
+
         return ChronixDBDatasource;
     }
-)
-;
+);
