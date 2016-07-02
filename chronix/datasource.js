@@ -49,6 +49,11 @@ define([
             return '(' + target.metric + ' AND ' + targetQueryStrings.join(' AND ') + ')';
         }
 
+        function toTargetJoinString(target) {
+            // create strings for each tag
+            return _(target.attributes).join(',') + ",metric";
+        }
+
         ChronixDBDatasource.prototype.rawQuery = function (targets, start, end) {
             // create strings for each target
             var targetsQueryStrings = _(targets).map(toTargetQueryString);
@@ -57,12 +62,15 @@ define([
                 + ' AND start:' + start
                 + ' AND end:' + end;
 
+            var joinquery = _(targets).map(toTargetJoinString);
+
             console.log("Query: " + query);
 
             //At this point we have to query chronix
-            var RAW_QUERY_BASE = '/select?fl=dataAsJson:[dataAsJson]&sort=start%20asc&wt=json';
-            var RAW_QUERY_FILTER_FUNCTION = '&fq=function=vector:0.1';
-            var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + '&q=';
+            var RAW_QUERY_BASE = '/select?fl=dataAsJson&wt=json';
+            var RAW_QUERY_JOIN = '&fq=join=' + joinquery;
+            var RAW_QUERY_FILTER_FUNCTION = '';//'&fq=function=vector:0.1';
+            var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + RAW_QUERY_JOIN + '&q=';
 
             var options = {
                 method: 'GET',
@@ -106,9 +114,7 @@ define([
 
                 //add them
                 for (var j = 0; j < timestamps.length; j++) {
-                    if (j % 1000 == 0) {
-                        tsPoints[currentMetric].push([values[j], timestamps[j]]);
-                    }
+                    tsPoints[currentMetric].push([values[j], timestamps[j]]);
                 }
 
             }
