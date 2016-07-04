@@ -22,15 +22,23 @@
     },
     "links": [
       {
+        "name": "Home Page",
+        "url": "http://www.chronix.io"
+      },
+      {
         "name": "GitHub",
-        "url": "https://github.com/chronixdb/grafana-datasource"
+        "url": "https://github.com/ChronixDB/chronix.grafana"
+      },
+      {
+        "name": "Issues",
+        "url": "https://github.com/ChronixDB/chronix.grafana/issues"
       },
       {
         "name": "License",
-        "url": "https://github.com/grafana/kairosdb-datasource/blob/master/LICENSE"
+        "url": "https://github.com/ChronixDB/chronix.grafana/blob/master/LICENSE"
       }
     ],
-    "version": "1.0.1",
+    "version": "0.1",
     "updated": "2016-02-10"
   },
   "dependencies": {

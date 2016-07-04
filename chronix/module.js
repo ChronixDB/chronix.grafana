@@ -1,20 +1,21 @@
 define([
-  './datasource',
-  './query_ctrl'
-],
-function(ChronixDBDatasource, ChronixDBQueryCtrl) {
-  'use strict';
+        './datasource',
+        './query_ctrl'
+    ],
+    function (ChronixDBDatasource, ChronixDBQueryCtrl) {
+        'use strict';
 
-  var ChronixDBConfigCtrl = function() {}
-  ChronixDBConfigCtrl.templateUrl = "partials/config.html";
+        var ChronixDBConfigCtrl = function () {
+        };
+        ChronixDBConfigCtrl.templateUrl = "partials/config.html";
 
-  var ChronixDBQueryOptionsCtrl = function() {}
-  ChronixDBQueryOptionsCtrl.templateUrl = "partials/query.options.html";
+        var ChronixDBQueryOptionsCtrl = function () {
+        };
 
-  return {
-    'Datasource': ChronixDBDatasource,
-    'QueryCtrl': ChronixDBQueryCtrl,
-    'ConfigCtrl': ChronixDBConfigCtrl,
-    'QueryOptionsCtrl': ChronixDBQueryOptionsCtrl
-  };
-});
+        return {
+            'Datasource': ChronixDBDatasource,
+            'QueryCtrl': ChronixDBQueryCtrl,
+            'ConfigCtrl': ChronixDBConfigCtrl,
+            'QueryOptionsCtrl': ChronixDBQueryOptionsCtrl
+        };
+    });
