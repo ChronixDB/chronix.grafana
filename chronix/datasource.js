@@ -50,6 +50,9 @@ define([
         }
 
         function toTargetJoinString(target) {
+            if (!target.attributes || Object.keys(target.attributes).length === 0) {
+                return "metric";
+            }
             // create strings for each tag
             return _(target.attributes).join(',') + ",metric";
         }
