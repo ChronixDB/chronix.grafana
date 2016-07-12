@@ -3,7 +3,7 @@
 This is the [Grafana](https://grafana.net/) datasource plugin. 
 It allows you to query time series from [Chronix-Server](https://github.com/ChronixDB/chronix.server) and visualize it within Grafana.
 This plugin works with Grafana > 3.X.X.
-
+![Chronix-Grafana-Integration](https://github.com/FlorianLautenschlager/chronix.grafana/blob/master/screenshot.png)
 
 ## Features
 
