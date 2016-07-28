@@ -61,7 +61,7 @@ define([
             // create strings for each target
             var targetsQueryStrings = _(targets).map(toTargetQueryString);
 
-            var query = '(' + targetsQueryStrings.join(' OR ') + ')'
+            var query = 'metric:(' + targetsQueryStrings.join(' OR ') + ')'
                 + ' AND start:' + start
                 + ' AND end:' + end;
 
