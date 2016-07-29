@@ -64,13 +64,14 @@ define([
 
             var joinquery = _(targets).map(toTargetJoinString);
 
-            console.log("Query: " + query);
-
             //At this point we have to query chronix
             var RAW_QUERY_BASE = '/select?fl=dataAsJson&wt=json';
             var RAW_QUERY_JOIN = '&fq=join=' + joinquery;
             var RAW_QUERY_FILTER_FUNCTION = '';//'&fq=function=vector:0.1';
             var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + RAW_QUERY_JOIN + '&q=';
+
+            console.log("Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
+
 
             var options = {
                 method: 'GET',
@@ -84,8 +85,6 @@ define([
 
 
         ChronixDBDatasource.prototype.extractTimeSeries = function (targetsResponse) {
-            console.time("parse and convert solr result");
-
             var response = targetsResponse[1];
 
             if (response.data === undefined) {
@@ -103,9 +102,7 @@ define([
                     tsPoints[currentMetric] = [];
                 }
 
-                console.time("json parse");
                 var jsonData = JSON.parse(currentDataSet.dataAsJson);
-                console.timeEnd("json parse");
 
                 var timestamps = jsonData[0];
                 var values = jsonData[1];
@@ -146,9 +143,6 @@ define([
         ChronixDBDatasource.prototype._performMetricSuggestQuery = function (metric) {
             var options = {
                 //do a facet query
-                //url: this.url + '/api/v1/metricnames',
-                //an example query call
-                //http://localhost:8983/solr/chronix/select?facet.field=metric&facet=on&indent=on&q=metric:*Co*&rows=0&wt=json
                 url: this.url + '/select?facet.field=metric&facet=on&q=metric:*&rows=0&wt=json',
                 method: 'GET'
             };
@@ -167,86 +161,11 @@ define([
             });
         };
 
-        ChronixDBDatasource.prototype._performMetricKeyLookup = function (metric) {
-            if (!metric) {
-                return this.q.when([]);
-            }
-
-            var options = {
-                method: 'POST',
-                url: this.url + '/select?facet.field=metric&facet=on&q=metric:*&rows=0&wt=json',
-                data: {
-                    metrics: [{name: metric}],
-                    cache_time: 0,
-                    start_absolute: 0
-                }
-            };
-
-            return this.backendSrv.datasourceRequest(options).then(function (result) {
-                if (!result.data) {
-                    return this.q.when([]);
-                }
-                var tagks = [];
-                _.each(result.data.queries[0].results[0].tags, function (tagv, tagk) {
-                    if (tagks.indexOf(tagk) === -1) {
-                        tagks.push(tagk);
-                    }
-                });
-                return tagks;
-            });
-        };
-
-        ChronixDBDatasource.prototype._performMetricKeyValueLookup = function (metric, key) {
-            if (!metric || !key) {
-                return this.q.when([]);
-            }
-
-            var options = {
-                method: 'POST',
-                url: this.url + '/api/v1/datapoints/query/tags',
-                data: {
-                    metrics: [{name: metric}],
-                    cache_time: 0,
-                    start_absolute: 0
-                }
-            };
-
-            return this.backendSrv.datasourceRequest(options).then(function (result) {
-                if (!result.data) {
-                    return this.q.when([]);
-                }
-                return result.data.queries[0].results[0].tags[key];
-            });
-        };
-
-        ChronixDBDatasource.prototype.performTagSuggestQuery = function (metric) {
-            var options = {
-                url: this.url + '/api/v1/datapoints/query/tags',
-                method: 'POST',
-                data: {
-                    metrics: [{name: metric}],
-                    cache_time: 0,
-                    start_absolute: 0
-                }
-            };
-
-            return this.backendSrv.datasourceRequest(options).then(function (response) {
-                if (!response.data) {
-                    return [];
-                }
-                else {
-                    return response.data.queries[0].results[0];
-                }
-            });
-        };
-
         /**
          * Gets the available fields / attributes
-         * @param query the query to filter the fields
          * @returns {*}
          */
-        ChronixDBDatasource.prototype.suggestAttributes = function (query) {
-            console.log("Query is " + query);
+        ChronixDBDatasource.prototype.suggestAttributes = function () {
             var options = {
                 method: 'GET',
                 url: this.url + '/admin/luke?numTerms=0&wt=json'
@@ -258,7 +177,6 @@ define([
 
         var requiredFields = ["data", "start", "end", "_version_", "id", "metric"];
         ChronixDBDatasource.prototype.mapToTextValue = function (result) {
-            console.log("Evaluating available fields.");
 
             var fields = result.data.fields;
 
@@ -267,13 +185,12 @@ define([
             for (var property in fields) {
                 if (fields.hasOwnProperty(property)) {
                     if (requiredFields.indexOf(property.toLowerCase()) == -1) {
-                        console.log("Field: " + property);
                         stringFields.push(property)
                     }
                 }
             }
             return _.map(stringFields, (name) => {
-                return {text: name, value: "hans"};
+                return {text: name};
             });
         };
 
@@ -290,7 +207,7 @@ define([
 
             var options = {
                 method: 'GET',
-                url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=' + metric + '&rows=0&wt=json'
+                url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=metric:' + metric + '&rows=0&wt=json'
             };
 
             return this.backendSrv.datasourceRequest(options).then(this.mapValueToText);
