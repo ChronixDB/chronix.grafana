@@ -22,10 +22,7 @@ define([
 
         // Called once per panel (graph)
         ChronixDBDatasource.prototype.query = function (options) {
-            //var start = options.rangeRaw.from;
-            //var end = options.rangeRaw.to;
-
-            //get the start and the end as unix time
+            //get the start and the end and multiply it with 1000 to get millis since 1970
             var start = options.range.from.unix() * 1000;
             var end = options.range.to.unix() * 1000;
             var targets = options.targets;
@@ -101,8 +98,6 @@ define([
             for (var i = 0; i < dataset.length; i++) {
                 var currentDataSet = dataset[i];
                 var currentMetric = currentDataSet.metric;
-                console.log("Working with metric: " + currentMetric);
-
 
                 if (!(currentMetric in tsPoints)) {
                     tsPoints[currentMetric] = [];
@@ -126,7 +121,6 @@ define([
             for (var key in tsPoints) {
                 ret.push({target: key, datapoints: tsPoints[key]});
             }
-            console.timeEnd("parse and convert solr result");
             return {data: ret};
         };
 
@@ -155,7 +149,7 @@ define([
                 //url: this.url + '/api/v1/metricnames',
                 //an example query call
                 //http://localhost:8983/solr/chronix/select?facet.field=metric&facet=on&indent=on&q=metric:*Co*&rows=0&wt=json
-                url: this.url + '/select?facet.field=metric&facet=on&indent=on&q=metric:*&rows=0&wt=json',
+                url: this.url + '/select?facet.field=metric&facet=on&q=metric:*&rows=0&wt=json',
                 method: 'GET'
             };
 
@@ -180,7 +174,7 @@ define([
 
             var options = {
                 method: 'POST',
-                url: this.url + '/select?facet.field=metric&facet=on&indent=on&q=metric:*&rows=0&wt=json',
+                url: this.url + '/select?facet.field=metric&facet=on&q=metric:*&rows=0&wt=json',
                 data: {
                     metrics: [{name: metric}],
                     cache_time: 0,
