@@ -63,7 +63,7 @@ define([
              * @param callback
              */
             ChronixDBQueryCtrl.prototype.addJoinByAttribute = function (query, callback) {
-                console.info("addGroupByTag is called for " + query);
+                console.info("add join by attribute is called for " + query);
 
                 self.datasource.suggestAttributes(query)
                     .then(self.getTextValues)
@@ -100,14 +100,16 @@ define([
             ChronixDBQueryCtrl.prototype.removeJoinByAttribute = function (attribute) {
                 console.info("removeJoinByAttribute is called for " + attribute);
 
-                var index = this.target.attributes.indexOf(attribute);
+               var index = this.target.attributes.indexOf(attribute);
 
-                delete this.target.attributes[index];
+                this.target.attributes.splice(index,1);
+
                 if (_.size(this.target.attributes) === 0) {
                     this.target.attributes = null;
                 }
                 this.targetBlur();
             };
+
 
             /**
              * Add join by attribute
@@ -128,6 +130,7 @@ define([
                 if (!this.target.errors.attributes) {
                     this.target.attributes.push(this.target.currentAttributeKey);
                     this.target.currentAttributeKey = '';
+
                     this.targetBlur();
                 }
 
@@ -135,15 +138,16 @@ define([
             };
 
 
+
             /**
              * Is called if someone types something into a key field of an attribute
              * @param query
              * @param callback
              */
-            ChronixDBQueryCtrl.prototype.suggestTagKeys = function (query, callback) {
+            ChronixDBQueryCtrl.prototype.suggestAttributes = function (query,callback) {
                 console.log("Suggest tag key is called");
 
-                self.datasource.suggestAttributes('tag_names(' + self.target.metric + ')')
+                self.datasource.suggestAttributes()
                     .then(self.getTextValues)
                     .then(callback);
             };
