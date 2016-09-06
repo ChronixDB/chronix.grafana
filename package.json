@@ -1,0 +1,40 @@
+{
+  "name": "chronix-grafana",
+  "version": "0.0.1",
+  "description": "Datasource plugin for ChronixDB",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChronixDB/chronix.grafana"
+  },
+  "author": {
+    "name": "Florian Lautenschlager",
+    "email": "florian.lautenschlager@qaware.de"
+  },
+  "contributors": [
+    {
+      "name": "Roland Hummel",
+      "email": "roland.hummel@qaware.de"
+    }
+  ],
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "babel-core": "^6.5.1",
+    "babel-plugin-transform-es2015-for-of": "^6.8.0",
+    "babel-plugin-transform-es2015-modules-systemjs": "^6.14.0",
+    "babel-preset-es2015": "^6.14.0",
+    "grunt": "^1.0.1",
+    "grunt-babel": "^6.0.0",
+    "grunt-cli": "^1.2.0",
+    "grunt-contrib-clean": "^1.0.0",
+    "grunt-contrib-copy": "^1.0.0",
+    "grunt-contrib-watch": "^1.0.0",
+    "load-grunt-tasks": "^3.5.2"
+  },
+  "dependencies": {
+    "lodash": "^4.0.0"
+  },
+  "scripts": {
+    "build": "grunt",
+    "watch": "grunt watch"
+  }
+}

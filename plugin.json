@@ -1,24 +1,25 @@
 {
-  "id": "chronix",
-  "name": "ChronixDB",
   "type": "datasource",
-  "metrics": true,
-  "annotations": false,
-  "staticRoot": ".",
+  "name": "ChronixDB",
+  "id": "chronix",
   "info": {
-    "description": "datasource plugin for ChronixDB",
+    "description": "Datasource plugin for ChronixDB",
     "author": {
       "name": "QAware",
       "url": "http://www.chronix.io"
     },
     "keywords": [
       "chronix",
+      "chronixdb",
       "apache solr",
-      "time series"
+      "solr",
+      "time series",
+      "timeseries",
+      "time-series"
     ],
     "logos": {
-      "small": "img/chronix_logo.png",
-      "large": "img/chronix_logo.png"
+      "small": "src/img/chronix_logo.png",
+      "large": "src/img/chronix_logo.png"
     },
     "links": [
       {
@@ -38,9 +39,17 @@
         "url": "https://github.com/ChronixDB/chronix.grafana/blob/master/LICENSE"
       }
     ],
-    "version": "0.1",
-    "updated": "2016-02-10"
+    "screenshots": [
+      {
+        "name": "ChronixDB in Grafana",
+        "path": "src/img/screenshot.png"
+      }
+    ],
+    "version": "0.0.1",
+    "updated": "2016-09-05"
   },
+  "metrics": true,
+  "annotations": false,
   "dependencies": {
     "grafanaVersion": "3.x.x",
     "plugins": []
