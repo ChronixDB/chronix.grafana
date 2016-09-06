@@ -1,4 +1,4 @@
-"use strict";
+'use strict';
 
 System.register([], function (_export, _context) {
   "use strict";
@@ -14,11 +14,13 @@ System.register([], function (_export, _context) {
   return {
     setters: [],
     execute: function () {
-      _export("ChronixDBQueryOptionsCtrl", ChronixDBQueryOptionsCtrl = function ChronixDBQueryOptionsCtrl() {
+      _export('ChronixDBQueryOptionsCtrl', ChronixDBQueryOptionsCtrl = function ChronixDBQueryOptionsCtrl() {
         _classCallCheck(this, ChronixDBQueryOptionsCtrl);
       });
 
-      _export("ChronixDBQueryOptionsCtrl", ChronixDBQueryOptionsCtrl);
+      _export('ChronixDBQueryOptionsCtrl', ChronixDBQueryOptionsCtrl);
+
+      ChronixDBQueryOptionsCtrl.templateUrl = 'partials/query.options.html';
     }
   };
 });
