@@ -1,14 +1,15 @@
-[![Build Status](https://travis-ci.org/ChronixDB/chronix.grafana.svg?branch=master)](https://travis-ci.org/ChronixDB/chronix.grafana)
 [![Join the chat at https://gitter.im/ChronixDB/chronix.grafana](https://badges.gitter.im/ChronixDB/chronix.grafana.svg)](https://gitter.im/ChronixDB/chronix.grafana?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+[![Build Status](https://travis-ci.org/ChronixDB/chronix.grafana.svg?branch=master)](https://travis-ci.org/ChronixDB/chronix.grafana)
 [![Dependency Status](https://dependencyci.com/github/ChronixDB/chronix.grafana/badge)](https://dependencyci.com/github/ChronixDB/chronix.grafana)
 [![Apache License 2](http://img.shields.io/badge/license-ASF2-blue.svg)](LICENSE)
 
 # Chronix Grafana Datasource Plugin
 
+This is a "datasource" plugin that lets you use time series from [Chronix-Server](https://github.com/ChronixDB/chronix.server)
+and visualize them with [Grafana](https://grafana.net/) datasource plugin. 
 
-This is the [Grafana](https://grafana.net/) datasource plugin. 
-It allows you to query time series from [Chronix-Server](https://github.com/ChronixDB/chronix.server) and visualize it within Grafana.
-This plugin works with Grafana > 3.X.X.
+It works with Grafana > 3.X.X.
+
 ![Chronix-Grafana-Integration](img/screenshot.png)
 
 ## Features
@@ -18,9 +19,10 @@ We will provide more details soon ;-)
 
 ## Usage
 
-Currently the plugin is only available at the chronix github repository. 
-It is planned to release the plugin within the app store of grafana.
-To use the plugin, simply clone this repository into your Grafana installation's `{inst-dir}\public\app\plugins\chronix`
+Currently, the plugin is only available at the chronix github repository. It is planned to release the plugin within 
+the app store of grafana.
+
+To use the plugin, simply clone this repository into your Grafana installation's `{inst-dir}/data/plugins/` directory.
 
 Optionally, you can download and start from the example dashboard:
 
@@ -31,25 +33,39 @@ Optionally, you can download and start from the example dashboard:
 ## Contributing
 
 Is there anything missing? Do you have ideas for new features or improvements? You are highly welcome to contribute
-your improvements, to the Chronix projects. All you have to do is to fork this repository,
-improve the code and issue a pull request.
+your improvements to the Chronix projects. All you have to do is to fork this repository, improve the code and issue a 
+pull request.
 
-## Development
+## Developing the plugin
 
-We're using a simple grunt task in combination with babel so that we can use ES2015 syntax in our "src" directory but 
-the files that will be served to the browser (in "dist") are ES5 compatible and follow the Grafana guidelines.
+### Basics
 
-If you want to change anything, first install everything needed (assuming you already have node and npm on your system):
+* All actual code sources live in `src` and can be written in ES6 / ES2015 - this allows us to use proper imports,
+exports and all the other syntactic goodies.
+* The `dist` folder is actually checked into git, too. We do this so that Grafana auto-detects the dist folder and uses
+it even if you just cloned the repository into Grafana (as described above).
+* This means that whenever you're changing something in `src`, you really should run the build at least once so that the
+contents of `dist` are "in sync", too, when you're committing / pushing / issuing a PR.
+
+### Set up (only needs to be done once)
+
+Use a command prompt that provides NodeJS and NPM. In it, simply run
 
     npm install
 
-To re-build the whole "dist" directory from "src", simply run the *default* grunt task (we set up npm scripts for you):
+to install all (dev-) dependencies for the build.
+
+### Changing stuff
+
+To run the build once in order to re-create the `dist` folder, run
 
     npm run build
 
-To start a watcher that re-builds on every file change, run the *watch* task:
+If you want the build to watch your `src` files and auto-run whenever you hit save, run
 
     npm run watch
+
+(you can end the watcher by pressing CTRL+C in that command prompt)
 
 ## Maintainer
 
