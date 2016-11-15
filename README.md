@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/ChronixDB/chronix.grafana.svg?branch=master)](https://travis-ci.org/ChronixDB/chronix.grafana)
+
 # Chronix Grafana Datasource Plugin
 
 This is the [Grafana](https://grafana.net/) datasource plugin. 
