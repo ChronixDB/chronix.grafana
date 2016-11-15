@@ -28,9 +28,12 @@ module.exports = function (grunt) {
 
         watch: {
             rebuild_all: {
-                files: ['src/**/*', 'plugin.json'],
+                files: ['src/**/*', 'plugin.json', 'README.md'],
                 tasks: ['default'],
-                options: {spawn: false}
+                options: {
+                    spawn: false,
+                    atBegin: true
+                }
             }
         },
 
@@ -54,7 +57,7 @@ module.exports = function (grunt) {
     });
 
     grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'copy:img_to_dist', 'copy:pluginDef', 'babel']);
-    
+
     grunt.registerTask('test', 'stub for tests', function () {
         grunt.log.ok();
     });
