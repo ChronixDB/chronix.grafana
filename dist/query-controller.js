@@ -83,6 +83,31 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                         _this.target.sampling = _this.panel.sampling;
                     }
 
+                    /**
+                     * Is called if someone types something into a key field of an attribute.
+                     */
+                    _this.suggestAttributes = function (query, callback) {
+                        _this.datasource.suggestAttributes().then(_this.getTextValues.bind(_this)).then(callback);
+                    };
+
+                    /**
+                     * Is called if someone types something into a value field of an attribute.
+                     */
+                    _this.suggestTagValues = function (query, callback) {
+                        _this.datasource.suggestAttributesValues(_this.target.metric, _this.target.currentTagKey).then(_this.getTextValues.bind(_this)).then(callback);
+                    };
+
+                    /**
+                     * Is called if someone types something into a key field of an attribute.
+                     */
+                    _this.suggestTagAttributes = function (query, callback) {
+                        _this.datasource.suggestAttributes(query).then(_this.getTextValues.bind(_this)).then(callback);
+                    };
+
+                    _this.suggestMetrics = function (query, callback) {
+                        _this.datasource.metricFindQuery(query).then(_this.getTextValues.bind(_this)).then(callback);
+                    };
+
                     _this.validateTarget();
                     return _this;
                 }
@@ -92,13 +117,13 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                     value: function validateTarget() {
                         var errs = {};
 
-                        if (!target.metric) {
+                        if (!this.target.metric) {
                             errs.metric = "You must supply a metric name.";
                         }
 
                         try {
-                            if (target.sampling) {
-                                this.datasource.convertToChronixInterval(target.sampling);
+                            if (this.target.sampling) {
+                                this.datasource.convertToChronixInterval(this.target.sampling);
                             }
                         } catch (err) {
                             errs.sampling = err.message;
@@ -124,21 +149,9 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                         });
                     }
                 }, {
-                    key: 'suggestMetrics',
-                    value: function suggestMetrics(query, callback) {
-                        this.datasource.metricFindQuery('metrics(' + query + ')').then(this.getTextValues.bind(this)).then(callback);
-                    }
-                }, {
                     key: 'addJoinByAttribute',
                     value: function addJoinByAttribute(query, callback) {
                         console.info("add join by attribute is called for " + query);
-
-                        this.datasource.suggestAttributes(query).then(this.getTextValues.bind(this)).then(callback);
-                    }
-                }, {
-                    key: 'suggestTagAttributes',
-                    value: function suggestTagAttributes(query, callback) {
-                        console.log("suggestTagAttributes is called for " + query);
 
                         this.datasource.suggestAttributes(query).then(this.getTextValues.bind(this)).then(callback);
                     }
@@ -188,20 +201,6 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                         }
 
                         this.panel.addJoinAttributeMode = false;
-                    }
-                }, {
-                    key: 'suggestAttributes',
-                    value: function suggestAttributes(query, callback) {
-                        console.log("Suggest tag key is called");
-
-                        this.datasource.suggestAttributes().then(this.getTextValues.bind(this)).then(callback);
-                    }
-                }, {
-                    key: 'suggestTagValues',
-                    value: function suggestTagValues(query, callback) {
-                        console.log("Suggest available attribute values");
-
-                        this.datasource.suggestAttributesValues(this.target.metric, this.target.currentTagKey).then(this.getTextValues.bind(this)).then(callback);
                     }
                 }, {
                     key: 'addFilterTag',

@@ -1,4 +1,4 @@
-import {QueryCtrl} from 'app/plugins/sdk';
+import { QueryCtrl } from 'app/plugins/sdk';
 import _ from 'lodash';
 
 function isInt (n) {
@@ -21,19 +21,52 @@ export class ChronixDbQueryController extends QueryCtrl {
             this.target.sampling = this.panel.sampling;
         }
 
+        /**
+         * Is called if someone types something into a key field of an attribute.
+         */
+        this.suggestAttributes = (query, callback) => {
+            this.datasource.suggestAttributes()
+                .then(this.getTextValues.bind(this))
+                .then(callback);
+        };
+
+        /**
+         * Is called if someone types something into a value field of an attribute.
+         */
+        this.suggestTagValues = (query, callback) => {
+            this.datasource.suggestAttributesValues(this.target.metric, this.target.currentTagKey)
+                .then(this.getTextValues.bind(this))
+                .then(callback);
+        };
+
+        /**
+         * Is called if someone types something into a key field of an attribute.
+         */
+        this.suggestTagAttributes = (query, callback) => {
+            this.datasource.suggestAttributes(query)
+                .then(this.getTextValues.bind(this))
+                .then(callback);
+        };
+
+        this.suggestMetrics = (query, callback) => {
+            this.datasource.metricFindQuery(query)
+                .then(this.getTextValues.bind(this))
+                .then(callback);
+        };
+
         this.validateTarget();
     }
 
     validateTarget () {
         var errs = {};
 
-        if (!target.metric) {
+        if (!this.target.metric) {
             errs.metric = "You must supply a metric name.";
         }
 
         try {
-            if (target.sampling) {
-                this.datasource.convertToChronixInterval(target.sampling);
+            if (this.target.sampling) {
+                this.datasource.convertToChronixInterval(this.target.sampling);
             }
         } catch (err) {
             errs.sampling = err.message;
@@ -57,12 +90,6 @@ export class ChronixDbQueryController extends QueryCtrl {
         });
     };
 
-    suggestMetrics (query, callback) {
-        this.datasource.metricFindQuery('metrics(' + query + ')')
-            .then(this.getTextValues.bind(this))
-            .then(callback);
-    };
-
     /**
      * =========================================================================
      *
@@ -78,19 +105,6 @@ export class ChronixDbQueryController extends QueryCtrl {
      */
     addJoinByAttribute (query, callback) {
         console.info("add join by attribute is called for " + query);
-
-        this.datasource.suggestAttributes(query)
-            .then(this.getTextValues.bind(this))
-            .then(callback);
-    };
-
-    /**
-     * Is called if someone types something into a key field of an attribute
-     * @param query
-     * @param callback
-     */
-    suggestTagAttributes (query, callback) {
-        console.log("suggestTagAttributes is called for " + query);
 
         this.datasource.suggestAttributes(query)
             .then(this.getTextValues.bind(this))
@@ -146,32 +160,6 @@ export class ChronixDbQueryController extends QueryCtrl {
         }
 
         this.panel.addJoinAttributeMode = false;
-    };
-
-    /**
-     * Is called if someone types something into a key field of an attribute
-     * @param query
-     * @param callback
-     */
-    suggestAttributes (query, callback) {
-        console.log("Suggest tag key is called");
-
-        this.datasource.suggestAttributes()
-            .then(this.getTextValues.bind(this))
-            .then(callback);
-    };
-
-    /**
-     * Is called if someone types something into a value field of an attribute
-     * @param query
-     * @param callback
-     */
-    suggestTagValues (query, callback) {
-        console.log("Suggest available attribute values");
-
-        this.datasource.suggestAttributesValues(this.target.metric, this.target.currentTagKey)
-            .then(this.getTextValues.bind(this))
-            .then(callback);
     };
 
     // Filter metric by tag

@@ -1,5 +1,9 @@
 [![Build Status](https://travis-ci.org/ChronixDB/chronix.grafana.svg?branch=master)](https://travis-ci.org/ChronixDB/chronix.grafana)
 
+[![Dependency Status](https://dependencyci.com/github/ChronixDB/chronix.grafana/badge)](https://dependencyci.com/github/ChronixDB/chronix.grafana)
+
+[![Apache License 2](http://img.shields.io/badge/license-ASF2-blue.svg)](LICENSE)
+
 # Chronix Grafana Datasource Plugin
 
 [![Join the chat at https://gitter.im/ChronixDB/chronix.grafana](https://badges.gitter.im/ChronixDB/chronix.grafana.svg)](https://gitter.im/ChronixDB/chronix.grafana?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
@@ -7,7 +11,7 @@
 This is the [Grafana](https://grafana.net/) datasource plugin. 
 It allows you to query time series from [Chronix-Server](https://github.com/ChronixDB/chronix.server) and visualize it within Grafana.
 This plugin works with Grafana > 3.X.X.
-![Chronix-Grafana-Integration](https://github.com/ChronixDB/chronix.grafana/blob/master/screenshot.png)
+![Chronix-Grafana-Integration](img/screenshot.png)
 
 ## Features
 
@@ -57,4 +61,4 @@ Florian Lautenschlager @flolaut
 
 This software is provided under the Apache License, Version 2.0 license.
 
-See the `LICENSE` file for details.
+See the [LICENSE](LICENSE) file for details.

@@ -1,7 +1,7 @@
-import {ChronixConfigController} from './config-controller';
-import {ChronixDBQueryOptionsCtrl} from './query-options-controller';
-import {ChronixDbDatasource} from 'datasource';
-import {ChronixDbQueryController} from './query-controller';
+import { ChronixConfigController } from './config-controller';
+import { ChronixDBQueryOptionsCtrl } from './query-options-controller';
+import { ChronixDbDatasource } from './datasource';
+import { ChronixDbQueryController } from './query-controller';
 
 export {
     // default stuff

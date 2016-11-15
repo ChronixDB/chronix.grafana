@@ -16,3 +16,4 @@ hs_err_pid*
 grafana-*
 
 node_modules
+npm-debug-log
