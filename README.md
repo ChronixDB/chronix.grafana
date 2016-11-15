@@ -1,5 +1,9 @@
 [![Build Status](https://travis-ci.org/ChronixDB/chronix.grafana.svg?branch=master)](https://travis-ci.org/ChronixDB/chronix.grafana)
 
+[![Dependency Status](https://dependencyci.com/github/ChronixDB/chronix.grafana/badge)](https://dependencyci.com/github/ChronixDB/chronix.grafana)
+
+[![Apache License 2](http://img.shields.io/badge/license-ASF2-blue.svg)](LICENSE)
+
 # Chronix Grafana Datasource Plugin
 
 This is the [Grafana](https://grafana.net/) datasource plugin. 
@@ -55,4 +59,4 @@ Florian Lautenschlager @flolaut
 
 This software is provided under the Apache License, Version 2.0 license.
 
-See the `LICENSE` file for details.
+See the [LICENSE](LICENSE) file for details.
