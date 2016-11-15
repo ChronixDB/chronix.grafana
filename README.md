@@ -1,12 +1,10 @@
 [![Build Status](https://travis-ci.org/ChronixDB/chronix.grafana.svg?branch=master)](https://travis-ci.org/ChronixDB/chronix.grafana)
-
+[![Join the chat at https://gitter.im/ChronixDB/chronix.grafana](https://badges.gitter.im/ChronixDB/chronix.grafana.svg)](https://gitter.im/ChronixDB/chronix.grafana?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 [![Dependency Status](https://dependencyci.com/github/ChronixDB/chronix.grafana/badge)](https://dependencyci.com/github/ChronixDB/chronix.grafana)
-
 [![Apache License 2](http://img.shields.io/badge/license-ASF2-blue.svg)](LICENSE)
 
 # Chronix Grafana Datasource Plugin
 
-[![Join the chat at https://gitter.im/ChronixDB/chronix.grafana](https://badges.gitter.im/ChronixDB/chronix.grafana.svg)](https://gitter.im/ChronixDB/chronix.grafana?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
 
 This is the [Grafana](https://grafana.net/) datasource plugin. 
 It allows you to query time series from [Chronix-Server](https://github.com/ChronixDB/chronix.server) and visualize it within Grafana.
