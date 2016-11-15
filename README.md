@@ -6,7 +6,7 @@
 # Chronix Grafana Datasource Plugin
 
 This is a "datasource" plugin that lets you use time series from [Chronix-Server](https://github.com/ChronixDB/chronix.server)
-and visualize them with [Grafana](https://grafana.net/) datasource plugin. 
+and visualize them with [Grafana](https://grafana.net/). 
 
 It works with Grafana > 3.X.X.
 
