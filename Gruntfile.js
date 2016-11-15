@@ -7,33 +7,17 @@ module.exports = function (grunt) {
         clean: ['dist'],
 
         copy: {
-            src_to_dist: {
+            srcAssets: {
                 cwd: 'src',
                 expand: true,
-                src: ['**/*', '!**/*.js', '!**/*.scss'],
+                src: ['**/*', '!**/*.js'],
                 dest: 'dist'
             },
-            img_to_dist: {
-                cwd: 'src',
+            pluginAssets: {
+                cwd: '.',
                 expand: true,
-                src: ['img/*'],
-                dest: 'dist/src/'
-            },
-            pluginDef: {
-                expand: true,
-                src: ['plugin.json', 'README.md'],
+                src: ['plugin.json', 'README.md', 'img/**/*'],
                 dest: 'dist'
-            }
-        },
-
-        watch: {
-            rebuild_all: {
-                files: ['src/**/*', 'plugin.json', 'README.md'],
-                tasks: ['default'],
-                options: {
-                    spawn: false,
-                    atBegin: true
-                }
             }
         },
 
@@ -47,16 +31,43 @@ module.exports = function (grunt) {
                 files: [{
                     cwd: 'src',
                     expand: true,
-                    src: ['*.js'],
+                    src: ['**/*.js'],
                     dest: 'dist',
                     ext: '.js'
                 }]
+            }
+        },
+
+        watch: {
+            src: {
+                files: ['src/**/*.js'],
+                tasks: ['babel'],
+                options: {
+                    spawn: false,
+                    atBegin: true
+                }
+            },
+            srcAssets: {
+                files: ['**/*', '!**/*.js'],
+                tasks: ['copy:srcAssets'],
+                options: {
+                    spawn: false,
+                    atBegin: true
+                }
+            },
+            pluginAssets: {
+                files: ['plugin.json', 'README.md', 'img/**/*'],
+                tasks: ['copy:pluginAssets'],
+                options: {
+                    spawn: false,
+                    atBegin: true
+                }
             }
         }
 
     });
 
-    grunt.registerTask('default', ['clean', 'copy:src_to_dist', 'copy:img_to_dist', 'copy:pluginDef', 'babel']);
+    grunt.registerTask('default', ['clean', 'copy', 'babel']);
 
     grunt.registerTask('test', 'stub for tests', function () {
         grunt.log.ok();
