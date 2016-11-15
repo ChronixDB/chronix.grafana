@@ -129,25 +129,40 @@ export class ChronixDbDatasource {
     /**
      * Gets the list of metrics
      */
-    _performMetricSuggestQuery (metric) {
+    metricFindQuery (metric) {
+        if (!metric || metric === '*') {
+            return this.q.when([]);
+        }
+
+        if (metric.indexOf('*') === -1) {
+            metric = metric + '*';
+        }
+
         var options = {
             //do a facet query
-            url: this.url + '/select?facet.field=metric&facet=on&q=metric:*&rows=0&wt=json',
+            url: `${this.url}/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:${metric}&rows=0&wt=json`,
             method: 'GET'
         };
 
-        return this.backendSrv.datasourceRequest(options).then(function (response) {
-            if (!response.data) {
-                return this.q.when([]);
-            }
-            var metrics = [];
-            _.each(response.data.results, function (r) {
-                if (r.indexOf(metric) >= 0) {
-                    metrics.push(r);
+        return this.backendSrv.datasourceRequest(options)
+            .then((response) => {
+                // somehow no valid response => empty array
+                if (!response
+                    || !response.data
+                    || !response.data.facet_counts
+                    || !response.data.facet_counts.facet_fields
+                    || !response.data.facet_counts.facet_fields.metric) {
+                    console.log(`could not find any metrics matching "${metric}"`);
+                    return [];
                 }
-            });
-            return metrics;
-        });
+
+                // take only the metric names, not the counts
+                return response.data.facet_counts.facet_fields.metric
+                    .filter((unused, index) => index % 2 === 0)
+                    .map(text => ({text}));
+            })
+            // if the request itself failed
+            .catch(error => []);
     }
 
     /**

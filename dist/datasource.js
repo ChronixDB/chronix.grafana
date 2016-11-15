@@ -162,25 +162,39 @@ System.register(['lodash'], function (_export, _context) {
                         });
                     }
                 }, {
-                    key: '_performMetricSuggestQuery',
-                    value: function _performMetricSuggestQuery(metric) {
+                    key: 'metricFindQuery',
+                    value: function metricFindQuery(metric) {
+                        if (!metric || metric === '*') {
+                            return this.q.when([]);
+                        }
+
+                        if (metric.indexOf('*') === -1) {
+                            metric = metric + '*';
+                        }
+
                         var options = {
                             //do a facet query
-                            url: this.url + '/select?facet.field=metric&facet=on&q=metric:*&rows=0&wt=json',
+                            url: this.url + '/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:' + metric + '&rows=0&wt=json',
                             method: 'GET'
                         };
 
                         return this.backendSrv.datasourceRequest(options).then(function (response) {
-                            if (!response.data) {
-                                return this.q.when([]);
+                            // somehow no valid response => empty array
+                            if (!response || !response.data || !response.data.facet_counts || !response.data.facet_counts.facet_fields || !response.data.facet_counts.facet_fields.metric) {
+                                console.log('could not find any metrics matching "' + metric + '"');
+                                return [];
                             }
-                            var metrics = [];
-                            _.each(response.data.results, function (r) {
-                                if (r.indexOf(metric) >= 0) {
-                                    metrics.push(r);
-                                }
+
+                            // take only the metric names, not the counts
+                            return response.data.facet_counts.facet_fields.metric.filter(function (unused, index) {
+                                return index % 2 === 0;
+                            }).map(function (text) {
+                                return { text: text };
                             });
-                            return metrics;
+                        })
+                        // if the request itself failed
+                        .catch(function (error) {
+                            return [];
                         });
                     }
                 }, {
