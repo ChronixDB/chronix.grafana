@@ -1,6 +1,6 @@
 import {ChronixConfigController} from './config-controller';
 import {ChronixDBQueryOptionsCtrl} from './query-options-controller';
-import {ChronixDbDatasource} from 'datasource';
+import {ChronixDbDatasource} from './datasource';
 import {ChronixDbQueryController} from './query-controller';
 
 export {

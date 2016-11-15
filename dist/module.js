@@ -1,6 +1,6 @@
 'use strict';
 
-System.register(['./config-controller', './query-options-controller', 'datasource', './query-controller'], function (_export, _context) {
+System.register(['./config-controller', './query-options-controller', './datasource', './query-controller'], function (_export, _context) {
     "use strict";
 
     var ChronixConfigController, ChronixDBQueryOptionsCtrl, ChronixDbDatasource, ChronixDbQueryController;
