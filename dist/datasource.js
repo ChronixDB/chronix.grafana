@@ -11,8 +11,12 @@ System.register(['lodash'], function (_export, _context) {
         }
     }
 
+    function escapeTag(metric) {
+        return metric.indexOf('.') !== -1 ? '"' + metric + '"' : metric;
+    }
+
     function toTagQueryString(tag, tagName) {
-        return tagName + ':(' + tag.join(' OR ') + ')';
+        return tagName + ':(' + tag.map(escapeTag).join(' OR ') + ')';
     }
 
     function toTargetQueryString(target) {
@@ -67,13 +71,12 @@ System.register(['lodash'], function (_export, _context) {
                     this.type = instanceSettings.type;
                     this.url = instanceSettings.url;
                     this.name = instanceSettings.name;
-                    this.q = $q;
+                    this.$q = $q;
                     this.backendSrv = backendSrv;
                     this.templateSrv = templateSrv;
                 }
 
-                // Called once per panel (graph)
-
+                //region Required Grafana Datasource methods
 
                 _createClass(ChronixDbDatasource, [{
                     key: 'query',
@@ -84,6 +87,83 @@ System.register(['lodash'], function (_export, _context) {
                         var targets = options.targets;
 
                         return this.rawQuery(targets, start, end).then(this.extractTimeSeries);
+                    }
+                }, {
+                    key: 'testDatasource',
+                    value: function testDatasource() {
+                        var options = {
+                            url: this.url + '/select?q=%7B!lucene%7D*%3A*&rows=0',
+                            method: 'GET'
+                        };
+                        var successMessage = {
+                            status: "success",
+                            message: "Connection to ChronixDB established",
+                            title: "Success"
+                        };
+                        var errorMessage = this.$q.reject({
+                            status: "error",
+                            message: "Connection to ChronixDB failed",
+                            title: "Error"
+                        });
+
+                        // perform the actual call...
+                        return this.backendSrv.datasourceRequest(options)
+                        // ... check if the response is technically successful ...
+                        .then(function (response) {
+                            return response && response.status === 200;
+                        })
+                        // ... and respond appropriately
+                        .then(function (success) {
+                            return success ? successMessage : errorMessage;
+                        })
+                        // ... and react appropriately, too, when the call somehow didn't work
+                        .catch(function (error) {
+                            return errorMessage;
+                        });
+                    }
+                }, {
+                    key: 'metricFindQuery',
+                    value: function metricFindQuery(metric) {
+                        var emptyResult = this.$q.when([]);
+
+                        if (!metric || metric === '*') {
+                            // no "*" accepted from the user
+                            return emptyResult;
+                        }
+
+                        if (metric.indexOf('*') === -1) {
+                            // append an "*" at the end if the user didn't already provide one
+                            metric = metric + '*';
+                        }
+
+                        var options = {
+                            //do a facet query
+                            url: this.url + '/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:' + metric + '&rows=0&wt=json',
+                            method: 'GET'
+                        };
+
+                        return this.backendSrv.datasourceRequest(options).then(function (response) {
+                            return response && response.data && response.data.facet_counts && response.data.facet_counts.facet_fields && response.data.facet_counts.facet_fields.metric;
+                        }).then(function (metricFields) {
+                            // somehow no valid response => empty array
+                            if (!metricFields) {
+                                console.log('could not find any metrics matching "' + metric + '"');
+                                return emptyResult;
+                            }
+
+                            // take only the metric names, not the counts
+                            return metricFields.filter(function (unused, index) {
+                                return index % 2 === 0;
+                            })
+                            // and provide them as objects with the "text" property
+                            .map(function (text) {
+                                return { text: text };
+                            });
+                        })
+                        // if the request itself failed
+                        .catch(function (error) {
+                            return emptyResult;
+                        });
                     }
                 }, {
                     key: 'rawQuery',
@@ -101,7 +181,7 @@ System.register(['lodash'], function (_export, _context) {
                         var RAW_QUERY_FILTER_FUNCTION = ''; //'&fq=function=vector:0.1';
                         var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + RAW_QUERY_JOIN + '&q=';
 
-                        console.log("Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
+                        console.log("ChronixDB Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
 
                         var options = {
                             method: 'GET',
@@ -150,54 +230,6 @@ System.register(['lodash'], function (_export, _context) {
                         return { data: ret };
                     }
                 }, {
-                    key: 'testDatasource',
-                    value: function testDatasource() {
-                        return this.backendSrv.datasourceRequest({
-                            url: this.url + '/select?q=%7B!lucene%7D*%3A*&rows=0',
-                            method: 'GET'
-                        }).then(function (response) {
-                            if (response.status === 200) {
-                                return { status: "success", message: "Data source is working", title: "Success" };
-                            }
-                        });
-                    }
-                }, {
-                    key: 'metricFindQuery',
-                    value: function metricFindQuery(metric) {
-                        if (!metric || metric === '*') {
-                            return this.q.when([]);
-                        }
-
-                        if (metric.indexOf('*') === -1) {
-                            metric = metric + '*';
-                        }
-
-                        var options = {
-                            //do a facet query
-                            url: this.url + '/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:' + metric + '&rows=0&wt=json',
-                            method: 'GET'
-                        };
-
-                        return this.backendSrv.datasourceRequest(options).then(function (response) {
-                            // somehow no valid response => empty array
-                            if (!response || !response.data || !response.data.facet_counts || !response.data.facet_counts.facet_fields || !response.data.facet_counts.facet_fields.metric) {
-                                console.log('could not find any metrics matching "' + metric + '"');
-                                return [];
-                            }
-
-                            // take only the metric names, not the counts
-                            return response.data.facet_counts.facet_fields.metric.filter(function (unused, index) {
-                                return index % 2 === 0;
-                            }).map(function (text) {
-                                return { text: text };
-                            });
-                        })
-                        // if the request itself failed
-                        .catch(function (error) {
-                            return [];
-                        });
-                    }
-                }, {
                     key: 'suggestAttributes',
                     value: function suggestAttributes() {
                         var options = {
@@ -228,8 +260,6 @@ System.register(['lodash'], function (_export, _context) {
                 }, {
                     key: 'suggestAttributesValues',
                     value: function suggestAttributesValues(metric, attribute) {
-                        console.log("Metric is " + metric + " Attribute is " + attribute);
-
                         var options = {
                             method: 'GET',
                             url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=metric:' + metric + '&rows=0&wt=json'
@@ -240,15 +270,12 @@ System.register(['lodash'], function (_export, _context) {
                 }, {
                     key: 'mapValueToText',
                     value: function mapValueToText(result) {
-                        console.log("Evaluating available attribute values.");
-
                         var fields = result.data.facet_counts.facet_fields;
 
                         var field;
                         //Iterate over the returned fields
                         for (var property in fields) {
                             if (fields.hasOwnProperty(property)) {
-                                console.log("Field: " + property);
                                 field = property;
                             }
                         }

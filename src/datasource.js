@@ -1,7 +1,11 @@
 import _ from 'lodash';
 
+function escapeTag (metric) {
+    return metric.indexOf('.') !== -1 ? `"${metric}"` : metric;
+}
+
 function toTagQueryString (tag, tagName) {
-    return tagName + ':(' + tag.join(' OR ') + ')'
+    return tagName + ':(' + tag.map(escapeTag).join(' OR ') + ')'
 }
 
 function toTargetQueryString (target) {
@@ -11,7 +15,7 @@ function toTargetQueryString (target) {
     }
 
     // create strings for each tag
-    var targetQueryStrings = _(target.tags).map(toTagQueryString);
+    const targetQueryStrings = _(target.tags).map(toTagQueryString);
 
     return '(' + target.metric + ' AND ' + targetQueryStrings.join(' AND ') + ')';
 }
@@ -32,12 +36,13 @@ export class ChronixDbDatasource {
         this.type = instanceSettings.type;
         this.url = instanceSettings.url;
         this.name = instanceSettings.name;
-        this.q = $q;
+        this.$q = $q;
         this.backendSrv = backendSrv;
         this.templateSrv = templateSrv;
     }
 
-    // Called once per panel (graph)
+    //region Required Grafana Datasource methods
+
     query (options) {
         // get the start and the end and multiply it with 1000 to get millis since 1970
         var start = options.range.from.unix() * 1000;
@@ -46,6 +51,79 @@ export class ChronixDbDatasource {
 
         return this.rawQuery(targets, start, end).then(this.extractTimeSeries);
     }
+
+    /**
+     * Attempts to connect to the URL entered by the user and responds with a promise to either a "success" or an
+     * "error" message.
+     */
+    testDatasource () {
+        const options = {
+            url: `${this.url}/select?q=%7B!lucene%7D*%3A*&rows=0`,
+            method: 'GET'
+        };
+        const successMessage = {
+            status: "success",
+            message: "Connection to ChronixDB established",
+            title: "Success"
+        };
+        const errorMessage = this.$q.reject({
+            status: "error",
+            message: "Connection to ChronixDB failed",
+            title: "Error"
+        });
+
+        // perform the actual call...
+        return this.backendSrv.datasourceRequest(options)
+            // ... check if the response is technically successful ...
+            .then(response => response && response.status === 200)
+            // ... and respond appropriately
+            .then(success => success ? successMessage : errorMessage)
+            // ... and react appropriately, too, when the call somehow didn't work
+            .catch(error => errorMessage);
+    }
+
+    /**
+     *
+     */
+    metricFindQuery (metric) {
+        const emptyResult = this.$q.when([]);
+
+        if (!metric || metric === '*') {
+            // no "*" accepted from the user
+            return emptyResult;
+        }
+
+        if (metric.indexOf('*') === -1) {
+            // append an "*" at the end if the user didn't already provide one
+            metric = metric + '*';
+        }
+
+        const options = {
+            //do a facet query
+            url: `${this.url}/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:${metric}&rows=0&wt=json`,
+            method: 'GET'
+        };
+
+        return this.backendSrv.datasourceRequest(options)
+            .then(response => response && response.data && response.data.facet_counts && response.data.facet_counts.facet_fields && response.data.facet_counts.facet_fields.metric)
+            .then((metricFields) => {
+                // somehow no valid response => empty array
+                if (!metricFields) {
+                    console.log(`could not find any metrics matching "${metric}"`);
+                    return emptyResult;
+                }
+
+                // take only the metric names, not the counts
+                return metricFields
+                    .filter((unused, index) => index % 2 === 0)
+                    // and provide them as objects with the "text" property
+                    .map(text => ({text}));
+            })
+            // if the request itself failed
+            .catch(error => emptyResult);
+    }
+
+    //endregion
 
     rawQuery (targets, start, end) {
         // create strings for each target
@@ -63,7 +141,7 @@ export class ChronixDbDatasource {
         var RAW_QUERY_FILTER_FUNCTION = '';//'&fq=function=vector:0.1';
         var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + RAW_QUERY_JOIN + '&q=';
 
-        console.log("Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
+        console.log("ChronixDB Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
 
         var options = {
             method: 'GET',
@@ -113,59 +191,6 @@ export class ChronixDbDatasource {
     }
 
     /**
-     * Test true if chronix is available.
-     */
-    testDatasource () {
-        return this.backendSrv.datasourceRequest({
-            url: this.url + '/select?q=%7B!lucene%7D*%3A*&rows=0',
-            method: 'GET'
-        }).then(response => {
-            if (response.status === 200) {
-                return {status: "success", message: "Data source is working", title: "Success"};
-            }
-        });
-    }
-
-    /**
-     * Gets the list of metrics
-     */
-    metricFindQuery (metric) {
-        if (!metric || metric === '*') {
-            return this.q.when([]);
-        }
-
-        if (metric.indexOf('*') === -1) {
-            metric = metric + '*';
-        }
-
-        var options = {
-            //do a facet query
-            url: `${this.url}/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:${metric}&rows=0&wt=json`,
-            method: 'GET'
-        };
-
-        return this.backendSrv.datasourceRequest(options)
-            .then((response) => {
-                // somehow no valid response => empty array
-                if (!response
-                    || !response.data
-                    || !response.data.facet_counts
-                    || !response.data.facet_counts.facet_fields
-                    || !response.data.facet_counts.facet_fields.metric) {
-                    console.log(`could not find any metrics matching "${metric}"`);
-                    return [];
-                }
-
-                // take only the metric names, not the counts
-                return response.data.facet_counts.facet_fields.metric
-                    .filter((unused, index) => index % 2 === 0)
-                    .map(text => ({text}));
-            })
-            // if the request itself failed
-            .catch(error => []);
-    }
-
-    /**
      * Gets the available fields / attributes
      */
     suggestAttributes () {
@@ -195,13 +220,12 @@ export class ChronixDbDatasource {
     }
 
     /**
-     * Gets the available values for the attributes
-     * @param metric the metric to get the available attributes
-     * @param attribute the attribute
+     * Gets the available values for the attributes.
+     *
+     * @param metric The metric to get the available attributes.
+     * @param attribute The attribute.
      */
     suggestAttributesValues (metric, attribute) {
-        console.log("Metric is " + metric + " Attribute is " + attribute);
-
         var options = {
             method: 'GET',
             url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=metric:' + metric + '&rows=0&wt=json'
@@ -211,15 +235,12 @@ export class ChronixDbDatasource {
     }
 
     mapValueToText (result) {
-        console.log("Evaluating available attribute values.");
-
         var fields = result.data.facet_counts.facet_fields;
 
         var field;
         //Iterate over the returned fields
         for (var property in fields) {
             if (fields.hasOwnProperty(property)) {
-                console.log("Field: " + property);
                 field = property;
             }
         }

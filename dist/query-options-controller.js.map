@@ -1,1 +1,0 @@
-{"version":3,"sources":["../src/query-options-controller.js"],"names":["ChronixDBQueryOptionsCtrl","templateUrl"],"mappings":";;;;;;;;;;;;;;;;2CAAaA,yB;;;;;;AAEbA,gCAA0BC,WAA1B,GAAwC,6BAAxC","file":"query-options-controller.js","sourcesContent":["export class ChronixDBQueryOptionsCtrl {}\r\n\r\nChronixDBQueryOptionsCtrl.templateUrl = 'partials/query.options.html';\r\n"]}

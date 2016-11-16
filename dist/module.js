@@ -1,27 +1,23 @@
 'use strict';
 
-System.register(['./config-controller', './query-options-controller', './datasource', './query-controller'], function (_export, _context) {
+System.register(['./datasource', './query-controller', './config-controller'], function (_export, _context) {
     "use strict";
 
-    var ChronixConfigController, ChronixDBQueryOptionsCtrl, ChronixDbDatasource, ChronixDbQueryController;
+    var ChronixDbDatasource, ChronixDbQueryController, ChronixConfigController;
     return {
-        setters: [function (_configController) {
-            ChronixConfigController = _configController.ChronixConfigController;
-        }, function (_queryOptionsController) {
-            ChronixDBQueryOptionsCtrl = _queryOptionsController.ChronixDBQueryOptionsCtrl;
-        }, function (_datasource) {
+        setters: [function (_datasource) {
             ChronixDbDatasource = _datasource.ChronixDbDatasource;
         }, function (_queryController) {
             ChronixDbQueryController = _queryController.ChronixDbQueryController;
+        }, function (_configController) {
+            ChronixConfigController = _configController.ChronixConfigController;
         }],
         execute: function () {
-            _export('ConfigCtrl', ChronixConfigController);
-
-            _export('QueryOptionsCtrl', ChronixDBQueryOptionsCtrl);
-
             _export('Datasource', ChronixDbDatasource);
 
             _export('QueryCtrl', ChronixDbQueryController);
+
+            _export('ConfigCtrl', ChronixConfigController);
         }
     };
 });
