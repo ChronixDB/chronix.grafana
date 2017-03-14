@@ -1,38 +1,38 @@
 import _ from 'lodash';
 
-function escapeTag (metric) {
-    return metric.indexOf('.') !== -1 ? `"${metric}"` : metric;
+function escapeTag(name) {
+    return name.indexOf('.') !== -1 ? `"${name}"` : name;
 }
 
-function toTagQueryString (tag, tagName) {
+function toTagQueryString(tag, tagName) {
     return tagName + ':(' + tag.map(escapeTag).join(' OR ') + ')'
 }
 
-function toTargetQueryString (target) {
+function toTargetQueryString(target) {
     if (!target.tags || Object.keys(target.tags).length === 0) {
-        // simple metric-only
-        return target.metric;
+        // simple name-only
+        return target.name;
     }
 
     // create strings for each tag
     const targetQueryStrings = _(target.tags).map(toTagQueryString);
 
-    return '(' + target.metric + ' AND ' + targetQueryStrings.join(' AND ') + ')';
+    return '(' + target.name + ' AND ' + targetQueryStrings.join(' AND ') + ')';
 }
 
-function toTargetJoinString (target) {
+function toTargetJoinString(target) {
     if (!target.attributes || Object.keys(target.attributes).length === 0) {
-        return "metric";
+        return "name";
     }
     // create strings for each tag
-    return _(target.attributes).join(',') + ",metric";
+    return _(target.attributes).join(',') + ",name,type";
 }
 
-var requiredFields = ["data", "start", "end", "_version_", "id", "metric"];
+var requiredFields = ["data", "start", "end", "_version_", "id", "name", "type"];
 
 export class ChronixDbDatasource {
 
-    constructor (instanceSettings, $q, backendSrv, templateSrv) {
+    constructor(instanceSettings, $q, backendSrv, templateSrv) {
         this.type = instanceSettings.type;
         this.url = instanceSettings.url;
         this.name = instanceSettings.name;
@@ -43,7 +43,7 @@ export class ChronixDbDatasource {
 
     //region Required Grafana Datasource methods
 
-    query (options) {
+    query(options) {
         // get the start and the end and multiply it with 1000 to get millis since 1970
         var start = options.range.from.unix() * 1000;
         var end = options.range.to.unix() * 1000;
@@ -56,25 +56,25 @@ export class ChronixDbDatasource {
      * Attempts to connect to the URL entered by the user and responds with a promise to either a "success" or an
      * "error" message.
      */
-    testDatasource () {
+    testDatasource() {
         const options = {
             url: `${this.url}/select?q=%7B!lucene%7D*%3A*&rows=0`,
             method: 'GET'
         };
         const successMessage = {
             status: "success",
-            message: "Connection to ChronixDB established",
+            message: "Connection to Chronix established",
             title: "Success"
         };
         const errorMessage = this.$q.reject({
             status: "error",
-            message: "Connection to ChronixDB failed",
+            message: "Connection to Chronix failed",
             title: "Error"
         });
 
         // perform the actual call...
         return this.backendSrv.datasourceRequest(options)
-            // ... check if the response is technically successful ...
+        // ... check if the response is technically successful ...
             .then(response => response && response.status === 200)
             // ... and respond appropriately
             .then(success => success ? successMessage : errorMessage)
@@ -85,36 +85,36 @@ export class ChronixDbDatasource {
     /**
      *
      */
-    metricFindQuery (metric) {
+    findTimeSeriesByNames(tsName) {
         const emptyResult = this.$q.when([]);
 
-        if (!metric || metric === '*') {
+        if (!tsName || tsName === '*') {
             // no "*" accepted from the user
             return emptyResult;
         }
 
-        if (metric.indexOf('*') === -1) {
+        if (tsName.indexOf('*') === -1) {
             // append an "*" at the end if the user didn't already provide one
-            metric = metric + '*';
+            tsName = tsName + '*';
         }
 
         const options = {
             //do a facet query
-            url: `${this.url}/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:${metric}&rows=0&wt=json`,
+            url: `${this.url}/select?facet.field=name&facet=on&facet.mincount=1&q=name:${tsName}&rows=0&wt=json`,
             method: 'GET'
         };
 
         return this.backendSrv.datasourceRequest(options)
-            .then(response => response && response.data && response.data.facet_counts && response.data.facet_counts.facet_fields && response.data.facet_counts.facet_fields.metric)
-            .then((metricFields) => {
+            .then(response => response && response.data && response.data.facet_counts && response.data.facet_counts.facet_fields && response.data.facet_counts.facet_fields.name)
+            .then((nameFields) => {
                 // somehow no valid response => empty array
-                if (!metricFields) {
-                    console.log(`could not find any metrics matching "${metric}"`);
+                if (!nameFields) {
+                    console.log(`could not find any matching time series for "${tsName}"`);
                     return emptyResult;
                 }
 
-                // take only the metric names, not the counts
-                return metricFields
+                // take only the names, not the counts
+                return nameFields
                     .filter((unused, index) => index % 2 === 0)
                     // and provide them as objects with the "text" property
                     .map(text => ({text}));
@@ -125,11 +125,11 @@ export class ChronixDbDatasource {
 
     //endregion
 
-    rawQuery (targets, start, end) {
+    rawQuery(targets, start, end) {
         // create strings for each target
         var targetsQueryStrings = _(targets).map(toTargetQueryString);
 
-        var query = 'metric:(' + targetsQueryStrings.join(' OR ') + ')'
+        var query = 'name:(' + targetsQueryStrings.join(' OR ') + ')'
             + ' AND start:' + start
             + ' AND end:' + end;
 
@@ -137,11 +137,11 @@ export class ChronixDbDatasource {
 
         //At this point we have to query chronix
         var RAW_QUERY_BASE = '/select?fl=dataAsJson&wt=json';
-        var RAW_QUERY_JOIN = '&fq=join=' + joinquery;
-        var RAW_QUERY_FILTER_FUNCTION = '';//'&fq=function=vector:0.1';
+        var RAW_QUERY_JOIN = '&cj=' + joinquery;
+        var RAW_QUERY_FILTER_FUNCTION = '';//'&cf=metric{vector:0.1}';
         var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + RAW_QUERY_JOIN + '&q=';
 
-        console.log("ChronixDB Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
+        console.log("Chronix Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
 
         var options = {
             method: 'GET',
@@ -153,7 +153,7 @@ export class ChronixDbDatasource {
         });
     }
 
-    extractTimeSeries (targetsResponse) {
+    extractTimeSeries(targetsResponse) {
         var response = targetsResponse[1];
 
         if (response.data === undefined) {
@@ -165,10 +165,10 @@ export class ChronixDbDatasource {
 
         for (var i = 0; i < dataset.length; i++) {
             var currentDataSet = dataset[i];
-            var currentMetric = currentDataSet.metric;
+            var currentTimeSeries = currentDataSet.name;
 
-            if (!(currentMetric in tsPoints)) {
-                tsPoints[currentMetric] = [];
+            if (!(currentTimeSeries in tsPoints)) {
+                tsPoints[currentTimeSeries] = [];
             }
 
             var jsonData = JSON.parse(currentDataSet.dataAsJson);
@@ -178,7 +178,7 @@ export class ChronixDbDatasource {
 
             //add them
             for (var j = 0; j < timestamps.length; j++) {
-                tsPoints[currentMetric].push([values[j], timestamps[j]]);
+                tsPoints[currentTimeSeries].push([values[j], timestamps[j]]);
             }
 
         }
@@ -193,7 +193,7 @@ export class ChronixDbDatasource {
     /**
      * Gets the available fields / attributes
      */
-    suggestAttributes () {
+    suggestAttributes() {
         var options = {
             method: 'GET',
             url: this.url + '/admin/luke?numTerms=0&wt=json'
@@ -202,7 +202,7 @@ export class ChronixDbDatasource {
         return this.backendSrv.datasourceRequest(options).then(this.mapToTextValue);
     }
 
-    mapToTextValue (result) {
+    mapToTextValue(result) {
         var fields = result.data.fields;
 
         var stringFields = [];
@@ -222,19 +222,19 @@ export class ChronixDbDatasource {
     /**
      * Gets the available values for the attributes.
      *
-     * @param metric The metric to get the available attributes.
+     * @param name The name to get the available attributes.
      * @param attribute The attribute.
      */
-    suggestAttributesValues (metric, attribute) {
+    suggestAttributesValues(name, attribute) {
         var options = {
             method: 'GET',
-            url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=metric:' + metric + '&rows=0&wt=json'
+            url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=name:' + name + '&rows=0&wt=json'
         };
 
         return this.backendSrv.datasourceRequest(options).then(this.mapValueToText);
     }
 
-    mapValueToText (result) {
+    mapValueToText(result) {
         var fields = result.data.facet_counts.facet_fields;
 
         var field;

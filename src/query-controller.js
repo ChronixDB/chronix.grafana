@@ -34,7 +34,7 @@ export class ChronixDbQueryController extends QueryCtrl {
          * Is called if someone types something into a value field of an attribute.
          */
         this.suggestTagValues = (query, callback) => {
-            this.datasource.suggestAttributesValues(this.target.metric, this.target.currentTagKey)
+            this.datasource.suggestAttributesValues(this.target.name, this.target.currentTagKey)
                 .then(this.getTextValues.bind(this))
                 .then(callback);
         };
@@ -49,7 +49,7 @@ export class ChronixDbQueryController extends QueryCtrl {
         };
 
         this.suggestMetrics = (query, callback) => {
-            this.datasource.metricFindQuery(query)
+            this.datasource.findTimeSeriesByNames(query)
                 .then(this.getTextValues.bind(this))
                 .then(callback);
         };
@@ -60,8 +60,8 @@ export class ChronixDbQueryController extends QueryCtrl {
     validateTarget () {
         var errs = {};
 
-        if (!this.target.metric) {
-            errs.metric = "You must supply a metric name.";
+        if (!this.target.name) {
+            errs.name = "You must supply a time series name.";
         }
 
         try {

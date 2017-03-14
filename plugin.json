@@ -1,9 +1,9 @@
 {
   "type": "datasource",
-  "name": "ChronixDB",
+  "name": "Chronix",
   "id": "chronix",
   "info": {
-    "description": "Datasource plugin for ChronixDB",
+    "description": "Datasource plugin for Chronix",
     "author": {
       "name": "QAware",
       "url": "http://www.chronix.io"

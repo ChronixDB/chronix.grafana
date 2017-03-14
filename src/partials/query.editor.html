@@ -4,10 +4,10 @@
             <li class="tight-form-item">Metric</li>
             <li>
                 <input type="text" class="input-large tight-form-input"
-                       ng-model="ctrl.target.metric"
+                       ng-model="ctrl.target.name"
                        spellcheck="false"
                        bs-typeahead="ctrl.suggestMetrics"
-                       placeholder="metric name"
+                       placeholder="time series name"
                        data-min-length=0 data-items=100
                        ng-blur="ctrl.targetBlur()">
                 <a bs-tooltip="ctrl.target.errors.metric"

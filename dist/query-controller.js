@@ -94,7 +94,7 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                      * Is called if someone types something into a value field of an attribute.
                      */
                     _this.suggestTagValues = function (query, callback) {
-                        _this.datasource.suggestAttributesValues(_this.target.metric, _this.target.currentTagKey).then(_this.getTextValues.bind(_this)).then(callback);
+                        _this.datasource.suggestAttributesValues(_this.target.name, _this.target.currentTagKey).then(_this.getTextValues.bind(_this)).then(callback);
                     };
 
                     /**
@@ -105,7 +105,7 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                     };
 
                     _this.suggestMetrics = function (query, callback) {
-                        _this.datasource.metricFindQuery(query).then(_this.getTextValues.bind(_this)).then(callback);
+                        _this.datasource.findTimeSeriesByNames(query).then(_this.getTextValues.bind(_this)).then(callback);
                     };
 
                     _this.validateTarget();
@@ -117,8 +117,8 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                     value: function validateTarget() {
                         var errs = {};
 
-                        if (!this.target.metric) {
-                            errs.metric = "You must supply a metric name.";
+                        if (!this.target.name) {
+                            errs.name = "You must supply a time series name.";
                         }
 
                         try {

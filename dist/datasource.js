@@ -11,8 +11,8 @@ System.register(['lodash'], function (_export, _context) {
         }
     }
 
-    function escapeTag(metric) {
-        return metric.indexOf('.') !== -1 ? '"' + metric + '"' : metric;
+    function escapeTag(name) {
+        return name.indexOf('.') !== -1 ? '"' + name + '"' : name;
     }
 
     function toTagQueryString(tag, tagName) {
@@ -21,22 +21,22 @@ System.register(['lodash'], function (_export, _context) {
 
     function toTargetQueryString(target) {
         if (!target.tags || Object.keys(target.tags).length === 0) {
-            // simple metric-only
-            return target.metric;
+            // simple name-only
+            return target.name;
         }
 
         // create strings for each tag
         var targetQueryStrings = _(target.tags).map(toTagQueryString);
 
-        return '(' + target.metric + ' AND ' + targetQueryStrings.join(' AND ') + ')';
+        return '(' + target.name + ' AND ' + targetQueryStrings.join(' AND ') + ')';
     }
 
     function toTargetJoinString(target) {
         if (!target.attributes || Object.keys(target.attributes).length === 0) {
-            return "metric";
+            return "name";
         }
         // create strings for each tag
-        return _(target.attributes).join(',') + ",metric";
+        return _(target.attributes).join(',') + ",name,type";
     }
 
     return {
@@ -62,7 +62,7 @@ System.register(['lodash'], function (_export, _context) {
                 };
             }();
 
-            requiredFields = ["data", "start", "end", "_version_", "id", "metric"];
+            requiredFields = ["data", "start", "end", "_version_", "id", "name", "type"];
 
             _export('ChronixDbDatasource', ChronixDbDatasource = function () {
                 function ChronixDbDatasource(instanceSettings, $q, backendSrv, templateSrv) {
@@ -97,12 +97,12 @@ System.register(['lodash'], function (_export, _context) {
                         };
                         var successMessage = {
                             status: "success",
-                            message: "Connection to ChronixDB established",
+                            message: "Connection to Chronix established",
                             title: "Success"
                         };
                         var errorMessage = this.$q.reject({
                             status: "error",
-                            message: "Connection to ChronixDB failed",
+                            message: "Connection to Chronix failed",
                             title: "Error"
                         });
 
@@ -122,37 +122,37 @@ System.register(['lodash'], function (_export, _context) {
                         });
                     }
                 }, {
-                    key: 'metricFindQuery',
-                    value: function metricFindQuery(metric) {
+                    key: 'findTimeSeriesByNames',
+                    value: function findTimeSeriesByNames(tsName) {
                         var emptyResult = this.$q.when([]);
 
-                        if (!metric || metric === '*') {
+                        if (!tsName || tsName === '*') {
                             // no "*" accepted from the user
                             return emptyResult;
                         }
 
-                        if (metric.indexOf('*') === -1) {
+                        if (tsName.indexOf('*') === -1) {
                             // append an "*" at the end if the user didn't already provide one
-                            metric = metric + '*';
+                            tsName = tsName + '*';
                         }
 
                         var options = {
                             //do a facet query
-                            url: this.url + '/select?facet.field=metric&facet=on&facet.mincount=1&q=metric:' + metric + '&rows=0&wt=json',
+                            url: this.url + '/select?facet.field=name&facet=on&facet.mincount=1&q=name:' + tsName + '&rows=0&wt=json',
                             method: 'GET'
                         };
 
                         return this.backendSrv.datasourceRequest(options).then(function (response) {
-                            return response && response.data && response.data.facet_counts && response.data.facet_counts.facet_fields && response.data.facet_counts.facet_fields.metric;
-                        }).then(function (metricFields) {
+                            return response && response.data && response.data.facet_counts && response.data.facet_counts.facet_fields && response.data.facet_counts.facet_fields.name;
+                        }).then(function (nameFields) {
                             // somehow no valid response => empty array
-                            if (!metricFields) {
-                                console.log('could not find any metrics matching "' + metric + '"');
+                            if (!nameFields) {
+                                console.log('could not find any matching time series for "' + tsName + '"');
                                 return emptyResult;
                             }
 
-                            // take only the metric names, not the counts
-                            return metricFields.filter(function (unused, index) {
+                            // take only the names, not the counts
+                            return nameFields.filter(function (unused, index) {
                                 return index % 2 === 0;
                             })
                             // and provide them as objects with the "text" property
@@ -171,17 +171,17 @@ System.register(['lodash'], function (_export, _context) {
                         // create strings for each target
                         var targetsQueryStrings = _(targets).map(toTargetQueryString);
 
-                        var query = 'metric:(' + targetsQueryStrings.join(' OR ') + ')' + ' AND start:' + start + ' AND end:' + end;
+                        var query = 'name:(' + targetsQueryStrings.join(' OR ') + ')' + ' AND start:' + start + ' AND end:' + end;
 
                         var joinquery = _(targets).map(toTargetJoinString);
 
                         //At this point we have to query chronix
                         var RAW_QUERY_BASE = '/select?fl=dataAsJson&wt=json';
-                        var RAW_QUERY_JOIN = '&fq=join=' + joinquery;
-                        var RAW_QUERY_FILTER_FUNCTION = ''; //'&fq=function=vector:0.1';
+                        var RAW_QUERY_JOIN = '&cj=' + joinquery;
+                        var RAW_QUERY_FILTER_FUNCTION = ''; //'&cf=metric{vector:0.1}';
                         var RAW_QUERY_BASE_WITH_FILTER = RAW_QUERY_BASE + RAW_QUERY_FILTER_FUNCTION + RAW_QUERY_JOIN + '&q=';
 
-                        console.log("ChronixDB Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
+                        console.log("Chronix Query: " + RAW_QUERY_BASE_WITH_FILTER + query);
 
                         var options = {
                             method: 'GET',
@@ -206,10 +206,10 @@ System.register(['lodash'], function (_export, _context) {
 
                         for (var i = 0; i < dataset.length; i++) {
                             var currentDataSet = dataset[i];
-                            var currentMetric = currentDataSet.metric;
+                            var currentTimeSeries = currentDataSet.name;
 
-                            if (!(currentMetric in tsPoints)) {
-                                tsPoints[currentMetric] = [];
+                            if (!(currentTimeSeries in tsPoints)) {
+                                tsPoints[currentTimeSeries] = [];
                             }
 
                             var jsonData = JSON.parse(currentDataSet.dataAsJson);
@@ -219,7 +219,7 @@ System.register(['lodash'], function (_export, _context) {
 
                             //add them
                             for (var j = 0; j < timestamps.length; j++) {
-                                tsPoints[currentMetric].push([values[j], timestamps[j]]);
+                                tsPoints[currentTimeSeries].push([values[j], timestamps[j]]);
                             }
                         }
 
@@ -259,10 +259,10 @@ System.register(['lodash'], function (_export, _context) {
                     }
                 }, {
                     key: 'suggestAttributesValues',
-                    value: function suggestAttributesValues(metric, attribute) {
+                    value: function suggestAttributesValues(name, attribute) {
                         var options = {
                             method: 'GET',
-                            url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=metric:' + metric + '&rows=0&wt=json'
+                            url: this.url + '/select?facet.field=' + attribute + '&facet=on&q=name:' + name + '&rows=0&wt=json'
                         };
 
                         return this.backendSrv.datasourceRequest(options).then(this.mapValueToText);
