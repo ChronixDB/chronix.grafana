@@ -28,8 +28,8 @@ Optionally, you can download and start from the example dashboard:
 
 1. Download and extract the latest [chronix.server](https://github.com/ChronixDB/chronix.server/releases/latest) and start it by cd'ing into the extracted directory and running `bin/solr start`.
 2. Download and extract the latest *importer.zip* from the latest [chronix.examples](https://github.com/ChronixDB/chronix.examples/releases/latest) release and run it by cd'ing into the extracted folder and running `./import`.
-3. Create a datasource called *Chronix* that points to http://localhost:8983/solr (no credentials needed).
-4. Import the example dashboard from 'dashboards' into your running Grafana
+3. Create a datasource called *Chronix* that points to http://localhost:8983/solr/chronix (no credentials needed).
+4. Import the example dashboard(s) from 'dashboards' into your running Grafana.
 
 ## Contributing
 
