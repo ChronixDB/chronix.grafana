@@ -55,6 +55,10 @@ export class ChronixDbQueryController extends QueryCtrl {
         };
 
         this.validateTarget();
+
+        this.getCollapsedText = () => {
+            return 'Expand to configure Chronix Query data source';
+        };
     }
 
     validateTarget () {

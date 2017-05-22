@@ -109,6 +109,10 @@ System.register(['app/plugins/sdk', 'lodash'], function (_export, _context) {
                     };
 
                     _this.validateTarget();
+
+                    _this.getCollapsedText = function () {
+                        return 'Expand to configure Chronix Query data source';
+                    };
                     return _this;
                 }
 
